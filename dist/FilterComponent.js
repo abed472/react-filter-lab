@@ -19,7 +19,7 @@ const FilterComponent = ({ filters, filterOptions, onFilterChange }) => {
         setMenuAnchorEl(null);
     };
     const addFilter = (filterOption) => {
-        const newFilter = { name: filterOption.name, value: null };
+        const newFilter = { name: filterOption === null || filterOption === void 0 ? void 0 : filterOption.name, value: null };
         onFilterChange([...filters, newFilter]);
         closeMenu();
     };
@@ -30,7 +30,7 @@ const FilterComponent = ({ filters, filterOptions, onFilterChange }) => {
     };
     const renderInputField = (filter, index) => {
         var _a, _b, _c;
-        const selectedOption = filterOptions.find((option) => option.name === filter.name);
+        const selectedOption = filterOptions.find((option) => (option === null || option === void 0 ? void 0 : option.name) === (filter === null || filter === void 0 ? void 0 : filter.name));
         if (!selectedOption)
             return null;
         switch (selectedOption.type) {
@@ -80,7 +80,7 @@ const FilterComponent = ({ filters, filterOptions, onFilterChange }) => {
                 // Check if the filter is defined before rendering
                 if (!filter || !filter.name)
                     return null;
-                const selectedOption = filterOptions.find((option) => option.name === filter.name);
+                const selectedOption = filterOptions.find((option) => (option === null || option === void 0 ? void 0 : option.name) === (filter === null || filter === void 0 ? void 0 : filter.name));
                 const value = Array.isArray(filter.value)
                     ? filter.value.join(", ")
                     : typeof filter.value === "object" && filter.value !== null

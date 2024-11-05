@@ -69,7 +69,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
   };
 
   const addFilter = (filterOption: FilterOption) => {
-    const newFilter: Filter = { name: filterOption.name, value: null };
+    const newFilter: Filter = { name: filterOption?.name, value: null };
     onFilterChange([...filters, newFilter]);
     closeMenu();
   };
@@ -81,7 +81,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
   };
 
   const renderInputField = (filter: Filter, index: number) => {
-    const selectedOption = filterOptions.find((option) => option.name === filter.name);
+    const selectedOption = filterOptions.find((option) => option?.name === filter?.name);
     if (!selectedOption) return null;
 
     switch (selectedOption.type) {
@@ -205,7 +205,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
           // Check if the filter is defined before rendering
           if (!filter || !filter.name) return null;
 
-          const selectedOption = filterOptions.find((option) => option.name === filter.name);
+          const selectedOption = filterOptions.find((option) => option?.name === filter?.name);
           const value = Array.isArray(filter.value)
             ? filter.value.join(", ")
             : typeof filter.value === "object" && filter.value !== null
