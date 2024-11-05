@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Chip,
@@ -40,46 +40,15 @@ interface Filter {
   value: FilterValue;
 }
 
-const filterOptions: FilterOption[] = [
-  { name: "customerName", type: "string", label: "Customer Name" },
-  { name: "customerEmail", type: "string", label: "Customer Email" },
-  { name: "dateRange", type: "dateRange", label: "Date Range" },
-  {
-    name: "customerType",
-    type: "select",
-    label: "Customer Type",
-    options: [
-      { label: "Individual", value: "Individual", icon: <AccountCircleIcon /> },
-      { label: "Business", value: "Business", icon: <AccountCircleIcon /> },
-    ],
-  },
-  {
-    name: "customerStatus",
-    type: "radio",
-    label: "Customer Status",
-    options: [
-      { label: "Active", value: "Active" },
-      { label: "Inactive", value: "Inactive" },
-    ],
-  },
-  {
-    name: "customerGroup",
-    type: "checkbox",
-    label: "Customer Group",
-    options: [
-      { label: "Group 1", value: "Group 1" },
-      { label: "Group 2", value: "Group 2" },
-      { label: "Group 3", value: "Group 3" },
-    ],
-  },
-  { name: "customerSalary", type: "range", label: "Customer Salary", min: 0, max: 100000 },
-];
+interface FilterComponentProps {
+  filters: Filter[];
+  filterOptions: FilterOption[];
+  onFilterChange: (updatedFilters: Filter[]) => void;
+}
 
-const FilterComponent: React.FC = () => {
-  const [filters, setFilters] = useState<Filter[]>([]);
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [selectedFilterIndex, setSelectedFilterIndex] = useState<number | null>(null);
-  const [currentValue, setCurrentValue] = useState<FilterValue>("");
+const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOptions, onFilterChange }) => {
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [selectedFilterIndex, setSelectedFilterIndex] = React.useState<number | null>(null);
 
   const openPopover = (event: React.MouseEvent<HTMLElement>, index: number | null) => {
     setSelectedFilterIndex(index);
@@ -88,26 +57,12 @@ const FilterComponent: React.FC = () => {
 
   const closePopover = () => {
     setAnchorEl(null);
-    setCurrentValue("");
   };
 
-  const addFilter = (event: React.MouseEvent<HTMLElement>) => {
-    setFilters([...filters, { name: "", value: null }]);
-    openPopover(event, filters.length);
-  };
-
-  const selectFilterType = (event: SelectChangeEvent<string>, index: number) => {
+  const handleFilterChange = (index: number, value: FilterValue) => {
     const updatedFilters = [...filters];
-    updatedFilters[index].name = event.target.value;
-    setFilters(updatedFilters);
-  };
-
-  const updateFilterValue = (value: FilterValue) => {
-    if (selectedFilterIndex !== null) {
-      const updatedFilters = [...filters];
-      updatedFilters[selectedFilterIndex].value = value;
-      setFilters(updatedFilters);
-    }
+    updatedFilters[index].value = value;
+    onFilterChange(updatedFilters);
   };
 
   const formatDateRange = (range: { start: string; end: string }) => {
@@ -115,9 +70,7 @@ const FilterComponent: React.FC = () => {
     return `${format(new Date(range.start), "dd/MM/yyyy")} - ${format(new Date(range.end), "dd/MM/yyyy")}`;
   };
 
-  const renderInputField = (filter: Filter | null) => {
-    if (!filter) return null;
-
+  const renderInputField = (filter: Filter, index: number) => {
     const selectedOption = filterOptions.find((option) => option.name === filter.name);
     if (!selectedOption) return null;
 
@@ -127,13 +80,13 @@ const FilterComponent: React.FC = () => {
           <TextField
             label={selectedOption.label}
             variant="outlined"
-            value={currentValue as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentValue(e.target.value)}
+            value={filter.value as string}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(index, e.target.value)}
             fullWidth
           />
         );
       case "dateRange":
-        const dateRangeValue = currentValue as { start: string; end: string } || { start: "", end: "" };
+        const dateRangeValue = filter.value as { start: string; end: string } || { start: "", end: "" };
         return (
           <Box display="flex" gap={2}>
             <TextField
@@ -142,7 +95,7 @@ const FilterComponent: React.FC = () => {
               InputLabelProps={{ shrink: true }}
               value={dateRangeValue.start}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setCurrentValue({ ...dateRangeValue, start: e.target.value })
+                handleFilterChange(index, { ...dateRangeValue, start: e.target.value })
               }
               fullWidth
             />
@@ -152,7 +105,7 @@ const FilterComponent: React.FC = () => {
               InputLabelProps={{ shrink: true }}
               value={dateRangeValue.end}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setCurrentValue({ ...dateRangeValue, end: e.target.value })
+                handleFilterChange(index, { ...dateRangeValue, end: e.target.value })
               }
               fullWidth
             />
@@ -163,11 +116,11 @@ const FilterComponent: React.FC = () => {
           <FormControl fullWidth>
             <InputLabel>{selectedOption.label}</InputLabel>
             <Select
-              value={currentValue as string}
-              onChange={(e: SelectChangeEvent<string>) => setCurrentValue(e.target.value)}
+              value={filter.value as string}
+              onChange={(e: SelectChangeEvent<string>) => handleFilterChange(index, e.target.value)}
             >
-              {selectedOption.options?.map((option, index) => (
-                <MenuItem key={index} value={option.value}>
+              {selectedOption.options?.map((option, idx) => (
+                <MenuItem key={idx} value={option.value}>
                   {option.icon} {option.label}
                 </MenuItem>
               ))}
@@ -177,12 +130,12 @@ const FilterComponent: React.FC = () => {
       case "radio":
         return (
           <RadioGroup
-            value={currentValue as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentValue(e.target.value)}
+            value={filter.value as string}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(index, e.target.value)}
           >
-            {selectedOption.options?.map((option, index) => (
+            {selectedOption.options?.map((option, idx) => (
               <FormControlLabel
-                key={index}
+                key={idx}
                 value={option.value}
                 control={<Radio />}
                 label={option.label}
@@ -191,10 +144,10 @@ const FilterComponent: React.FC = () => {
           </RadioGroup>
         );
       case "checkbox":
-        const checkboxValue = (currentValue as string[]) || [];
-        return selectedOption.options?.map((option, index) => (
+        const checkboxValue = (filter.value as string[]) || [];
+        return selectedOption.options?.map((option, idx) => (
           <FormControlLabel
-            key={index}
+            key={idx}
             control={
               <Checkbox
                 checked={checkboxValue.includes(option.value)}
@@ -205,7 +158,7 @@ const FilterComponent: React.FC = () => {
                   } else {
                     newValue.splice(newValue.indexOf(option.value), 1);
                   }
-                  setCurrentValue(newValue);
+                  handleFilterChange(index, newValue);
                 }}
               />
             }
@@ -215,8 +168,8 @@ const FilterComponent: React.FC = () => {
       case "range":
         return (
           <Slider
-            value={currentValue as number || 0}
-            onChange={(e, newValue) => setCurrentValue(newValue as number)}
+            value={filter.value as number || 0}
+            onChange={(e, newValue) => handleFilterChange(index, newValue as number)}
             valueLabelDisplay="auto"
             min={selectedOption.min}
             max={selectedOption.max}
@@ -252,14 +205,17 @@ const FilterComponent: React.FC = () => {
               <Chip
                 label={`${filter.name || "Select Filter"}: ${value || ""}`}
                 onClick={(e) => openPopover(e, index)}
-                onDelete={() => setFilters(filters.filter((_, i) => i !== index))}
+                onDelete={() => {
+                  const updatedFilters = filters.filter((_, i) => i !== index);
+                  onFilterChange(updatedFilters);
+                }}
                 color="primary"
                 sx={{ fontSize: "16px", padding: "0 8px", transition: "all 0.3s ease" }}
               />
             </Grow>
           );
         })}
-        <IconButton onClick={addFilter} sx={{ transition: "transform 0.3s ease" }}>
+        <IconButton onClick={(e) => openPopover(e, null)} sx={{ transition: "transform 0.3s ease" }}>
           <AddCircleOutlineIcon color="action" />
         </IconButton>
       </Box>
@@ -274,30 +230,14 @@ const FilterComponent: React.FC = () => {
         <Box sx={{ padding: 2, minWidth: "300px" }}>
           {selectedFilterIndex !== null && (
             <>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Filter Type</InputLabel>
-                <Select
-                  value={filters[selectedFilterIndex]?.name || ""}
-                  onChange={(e: SelectChangeEvent<string>) => selectFilterType(e, selectedFilterIndex)}
-                >
-                  {filterOptions.map((option, index) => (
-                    <MenuItem key={index} value={option.name}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {renderInputField(filters[selectedFilterIndex])}
+              {renderInputField(filters[selectedFilterIndex], selectedFilterIndex)}
               <Button
-                onClick={() => {
-                  updateFilterValue(currentValue);
-                  closePopover();
-                }}
+                onClick={closePopover}
                 variant="contained"
                 color="primary"
                 sx={{ mt: 2 }}
               >
-                Save Filter
+                Close
               </Button>
             </>
           )}
