@@ -5,7 +5,7 @@ type FilterValue = string | string[] | {
 } | number | null;
 interface FilterOption {
     name: string;
-    type: "string" | "dateRange" | "select" | "radio" | "checkbox" | "range";
+    type: 'string' | 'dateRange' | 'select' | 'radio' | 'checkbox' | 'range';
     label: string;
     options?: {
         label: string;
