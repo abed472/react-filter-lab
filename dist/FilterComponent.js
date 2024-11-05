@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Chip, Button, MenuItem, TextField, IconButton, Popover, FormControl, InputLabel, Select, RadioGroup, Radio, FormControlLabel, Checkbox, Slider, Typography, Grow, } from "@mui/material";
+import { Box, Chip, Button, MenuItem, TextField, IconButton, Popover, FormControl, InputLabel, Select, RadioGroup, Radio, FormControlLabel, Checkbox, Slider, Grow, } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { format } from "date-fns";
 const FilterComponent = ({ filters, filterOptions, onFilterChange }) => {
@@ -88,9 +88,6 @@ const FilterComponent = ({ filters, filterOptions, onFilterChange }) => {
         React.createElement(Popover, { open: Boolean(anchorEl), anchorEl: anchorEl, onClose: closePopover, anchorOrigin: { vertical: "bottom", horizontal: "left" }, transformOrigin: { vertical: "top", horizontal: "left" }, transitionDuration: 300 },
             React.createElement(Box, { sx: { padding: 2, minWidth: "300px" } }, selectedFilterIndex !== null && (React.createElement(React.Fragment, null,
                 renderInputField(filters[selectedFilterIndex], selectedFilterIndex),
-                React.createElement(Button, { onClick: closePopover, variant: "contained", color: "primary", sx: { mt: 2 } }, "Close"))))),
-        React.createElement(Typography, { variant: "body1", sx: { mt: 4 } },
-            "Filter Values: ",
-            JSON.stringify(filters, null, 2))));
+                React.createElement(Button, { onClick: closePopover, variant: "contained", color: "primary", sx: { mt: 2 } }, "Close")))))));
 };
 export default FilterComponent;
