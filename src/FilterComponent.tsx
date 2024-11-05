@@ -18,17 +18,17 @@ import {
   Slider,
   Typography,
   Grow,
+  Menu,
+  ListItemText,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import { format } from "date-fns";
 
 // Define types for filter options and filters
 type FilterValue = string | string[] | { start: string; end: string } | number | null;
 
 interface FilterOption {
   name: string;
-  type: "string" | "dateRange" | "select" | "radio" | "checkbox" | "range";
+  type: 'string' | 'dateRange' | 'select' | 'radio' | 'checkbox' | 'range';
   label: string;
   options?: { label: string; value: string; icon?: JSX.Element }[];
   min?: number;
@@ -48,6 +48,7 @@ interface FilterComponentProps {
 
 const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOptions, onFilterChange }) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<HTMLElement | null>(null);
   const [selectedFilterIndex, setSelectedFilterIndex] = React.useState<number | null>(null);
 
   const openPopover = (event: React.MouseEvent<HTMLElement>, index: number | null) => {
@@ -59,15 +60,24 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
     setAnchorEl(null);
   };
 
-  const handleFilterChange = (index: number, value: FilterValue) => {
+  const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const closeMenu = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const addFilter = (filterOption: FilterOption) => {
+    const newFilter: Filter = { name: filterOption.name, value: null };
+    onFilterChange([...filters, newFilter]);
+    closeMenu();
+  };
+
+  const handleFilterValueChange = (index: number, value: FilterValue) => {
     const updatedFilters = [...filters];
     updatedFilters[index].value = value;
     onFilterChange(updatedFilters);
-  };
-
-  const formatDateRange = (range: { start: string; end: string }) => {
-    if (!range || !range.start || !range.end) return "";
-    return `${format(new Date(range.start), "dd/MM/yyyy")} - ${format(new Date(range.end), "dd/MM/yyyy")}`;
   };
 
   const renderInputField = (filter: Filter, index: number) => {
@@ -75,18 +85,18 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
     if (!selectedOption) return null;
 
     switch (selectedOption.type) {
-      case "string":
+      case 'string':
         return (
           <TextField
             label={selectedOption.label}
             variant="outlined"
             value={filter.value as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(index, e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterValueChange(index, e.target.value)}
             fullWidth
           />
         );
-      case "dateRange":
-        const dateRangeValue = filter.value as { start: string; end: string } || { start: "", end: "" };
+      case 'dateRange':
+        const dateRangeValue = filter.value as { start: string; end: string } || { start: '', end: '' };
         return (
           <Box display="flex" gap={2}>
             <TextField
@@ -95,7 +105,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
               InputLabelProps={{ shrink: true }}
               value={dateRangeValue.start}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleFilterChange(index, { ...dateRangeValue, start: e.target.value })
+                handleFilterValueChange(index, { ...dateRangeValue, start: e.target.value })
               }
               fullWidth
             />
@@ -105,19 +115,19 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
               InputLabelProps={{ shrink: true }}
               value={dateRangeValue.end}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                handleFilterChange(index, { ...dateRangeValue, end: e.target.value })
+                handleFilterValueChange(index, { ...dateRangeValue, end: e.target.value })
               }
               fullWidth
             />
           </Box>
         );
-      case "select":
+      case 'select':
         return (
           <FormControl fullWidth>
             <InputLabel>{selectedOption.label}</InputLabel>
             <Select
               value={filter.value as string}
-              onChange={(e: SelectChangeEvent<string>) => handleFilterChange(index, e.target.value)}
+              onChange={(e: SelectChangeEvent<string>) => handleFilterValueChange(index, e.target.value)}
             >
               {selectedOption.options?.map((option, idx) => (
                 <MenuItem key={idx} value={option.value}>
@@ -127,11 +137,11 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
             </Select>
           </FormControl>
         );
-      case "radio":
+      case 'radio':
         return (
           <RadioGroup
             value={filter.value as string}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(index, e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterValueChange(index, e.target.value)}
           >
             {selectedOption.options?.map((option, idx) => (
               <FormControlLabel
@@ -143,7 +153,7 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
             ))}
           </RadioGroup>
         );
-      case "checkbox":
+      case 'checkbox':
         const checkboxValue = (filter.value as string[]) || [];
         return selectedOption.options?.map((option, idx) => (
           <FormControlLabel
@@ -158,18 +168,18 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
                   } else {
                     newValue.splice(newValue.indexOf(option.value), 1);
                   }
-                  handleFilterChange(index, newValue);
+                  handleFilterValueChange(index, newValue);
                 }}
               />
             }
             label={option.label}
           />
         ));
-      case "range":
+      case 'range':
         return (
           <Slider
             value={filter.value as number || 0}
-            onChange={(e, newValue) => handleFilterChange(index, newValue as number)}
+            onChange={(e, newValue) => handleFilterValueChange(index, newValue as number)}
             valueLabelDisplay="auto"
             min={selectedOption.min}
             max={selectedOption.max}
@@ -192,33 +202,48 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
         }}
       >
         {filters.map((filter, index) => {
+          // Check if the filter is defined before rendering
+          if (!filter || !filter.name) return null;
+
           const selectedOption = filterOptions.find((option) => option.name === filter.name);
-          const value =
-            selectedOption?.type === "dateRange"
-              ? formatDateRange(filter.value as { start: string; end: string })
-              : Array.isArray(filter.value)
-              ? filter.value.join(", ")
-              : filter.value;
+          const value = Array.isArray(filter.value)
+            ? filter.value.join(", ")
+            : typeof filter.value === "object" && filter.value !== null
+            ? `${filter.value.start} - ${filter.value.end}`
+            : filter.value;
 
           return (
             <Grow in key={index} timeout={300}>
               <Chip
-                label={`${filter.name || "Select Filter"}: ${value || ""}`}
+                label={`${selectedOption?.label || "Select Filter"}: ${value || ""}`}
                 onClick={(e) => openPopover(e, index)}
                 onDelete={() => {
                   const updatedFilters = filters.filter((_, i) => i !== index);
                   onFilterChange(updatedFilters);
                 }}
                 color="primary"
-                sx={{ fontSize: "16px", padding: "0 8px", transition: "all 0.3s ease" }}
+                sx={{
+                  fontSize: "12px", // Smaller font size
+                  padding: "4px 8px", // Smaller padding
+                  transition: "all 0.3s ease",
+                }}
               />
             </Grow>
           );
         })}
-        <IconButton onClick={(e) => openPopover(e, null)} sx={{ transition: "transform 0.3s ease" }}>
+        <IconButton onClick={openMenu} sx={{ transition: "transform 0.3s ease" }}>
           <AddCircleOutlineIcon color="action" />
         </IconButton>
       </Box>
+      {/* Menu for Adding Filters */}
+      <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={closeMenu}>
+        {filterOptions.map((option, index) => (
+          <MenuItem key={index} onClick={() => addFilter(option)}>
+            <ListItemText primary={option.label} />
+          </MenuItem>
+        ))}
+      </Menu>
+      {/* Popover for Editing Filter Values */}
       <Popover
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
@@ -228,19 +253,10 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
         transitionDuration={300}
       >
         <Box sx={{ padding: 2, minWidth: "300px" }}>
-          {selectedFilterIndex !== null && (
-            <>
-              {renderInputField(filters[selectedFilterIndex], selectedFilterIndex)}
-              <Button
-                onClick={closePopover}
-                variant="contained"
-                color="primary"
-                sx={{ mt: 2 }}
-              >
-                Close
-              </Button>
-            </>
-          )}
+          {selectedFilterIndex !== null && renderInputField(filters[selectedFilterIndex], selectedFilterIndex)}
+          <Button onClick={closePopover} variant="contained" color="primary" sx={{ mt: 2 }}>
+            Close
+          </Button>
         </Box>
       </Popover>
     </Box>
