@@ -243,9 +243,6 @@ const FilterComponent: React.FC<FilterComponentProps> = ({ filters, filterOption
           )}
         </Box>
       </Popover>
-      <Typography variant="body1" sx={{ mt: 4 }}>
-        Filter Values: {JSON.stringify(filters, null, 2)}
-      </Typography>
     </Box>
   );
 };
